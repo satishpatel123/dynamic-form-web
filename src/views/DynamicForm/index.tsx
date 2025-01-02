@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate, useParams } from "react-router-dom";
 
 type Field = {
   id: number;
@@ -12,68 +13,65 @@ type Field = {
 };
 
 const DynamicForm = () => {
+  const navigate = useNavigate();
   const [fields, setFields] = useState<Field[]>([]); // Dynamic fields
   const [formData, setFormData] = useState<{ [key: string]: string }>({}); // Store form data
 
   useEffect(() => {
-    // Fetch master settings
+    fetchFormSettings()
     axios.get('/api/master-settings')
       .then(response => {
-        console.log('Fetched Fields:', response.data); // Debug the fetched data
+        console.log('response.data => ',response.data);
+        
         setFields(response.data);
-        // Initialize formData state with default values from fields
         const initialData: { [key: string]: string } = {};
         response.data.forEach((field: Field) => {
-          initialData[field.key] = field.value; // Initialize with field value
+          initialData[field.key] = field.value;
         });
-        setFormData(initialData); // Set initial form data
+        setFormData(initialData);
       })
       .catch(error => console.error('Error fetching master settings', error));
   }, []);
 
-  // Handle input change and update form data
+
+  const fetchFormSettings = async () => {
+    try {
+      const response = await axios.get('/api/master-settings/get-save-from-one');
+      console.log('response => ',response.data.data);
+      
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+  
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    debugger
     setFormData({
       ...formData,
-      [name]: value, // Update the form data state dynamically
+      [name]: value,
     });
   };
 
   // Form submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitted Data:', formData); // Log the form data on submit
-
-    // Optionally, send the form data to the backend
-    // axios.post('/api/submit', formData).then(response => {
-    //   console.log('Form submitted successfully:', response);
-    // }).catch(error => {
-    //   console.error('Error submitting form:', error);
-    // });
+    axios.post('/api/master-settings/save-form', {value : formData}).then(response => {
+      if(response.data.status) {
+          navigate('/')
+          return response.data.status;
+      } else {
+        return false;
+      }
+      
+    }).catch(error => {
+      console.error('Error submitting form:', error);
+    });
   };
-
+  
   return (
-    /*  <form onSubmit={handleSubmit}>
-       {fields.map(field => (
-         <div key={field.id} className='p-2'>
-           <label htmlFor={field.key}>{field.value}: </label>
-           <input
-             id={field.key}
-             name={field.key}
-             type={field.type} // Use the field type dynamically
-             value={formData[field.key] || ''} // Bind value from formData state
-             onChange={handleInputChange} // Handle input change
-             required={field.required} // Apply required field conditionally
-           />
-         </div>
-       ))}
-       <button type="submit">Submit</button>
-     </form> */
-
     <div className="p-4">
-      <h1 className="text-2xl mb-4">Master Settings</h1>
+      <h1 className="text-2xl mb-4">Master Form</h1>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           {fields.map((field, index) => (
@@ -97,17 +95,10 @@ const DynamicForm = () => {
           ))}
         </div>
 
-        {/* Display error message */}
-        {/* {errorMessage && <p className="text-red-500">{errorMessage}</p>} */}
-
         <div className="mt-4">
-
           <button
-            type="submit"
-            className="bg-green-500 text-white p-2"
-          // disabled={loading} // Disable the button when loading
-          >
-            {'Save Settings'}
+            type="submit" className="bg-green-500 text-white p-2"                 >
+            {'Save & Edit'}
           </button>
         </div>
       </form>

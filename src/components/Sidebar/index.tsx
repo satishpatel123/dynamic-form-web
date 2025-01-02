@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
               </svg>
             </div>
             
-          <Link to="/" >Forms</Link>
+          <Link to="/" >Master Forms</Link>
             
           </div>
           <div role="button"
